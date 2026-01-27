@@ -95,13 +95,25 @@ export default function ShouldIStayOrShouldIGo() {
 
   const t = translations[language];
   
-  // Generate or get session ID
+  // Generate or get session ID from URL or localStorage
   const [sessionId] = useState(() => {
+    // Try to get from URL first
+    const pathId = window.location.pathname.substring(1); // Remove leading /
+    if (pathId && pathId.length > 0) {
+      localStorage.setItem('sessionId', pathId);
+      return pathId;
+    }
+    
+    // Try localStorage
     let id = localStorage.getItem('sessionId');
     if (!id) {
       id = Math.random().toString(36).substring(2, 15);
       localStorage.setItem('sessionId', id);
     }
+    
+    // Update URL without reload
+    window.history.replaceState(null, '', `/${id}`);
+    
     return id;
   });
   
