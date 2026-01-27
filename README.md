@@ -1,4 +1,52 @@
-# React + Vite
+# should-i-stay-or-should-i-go
+
+A modern web app to help you decide: should you stay or should you go? This is the frontend for the project, built with React and Tailwind CSS, and connects to a Cloudflare Worker KV backend.
+
+## Tech Stack
+- React
+- Vite
+- Tailwind CSS
+- JavaScript (ES6+)
+
+## Getting Started
+
+### Prerequisites
+- Node.js (v18+ recommended)
+- npm or yarn
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Development
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The app will be available at [http://localhost:5173](http://localhost:5173) by default.
+
+### Build
+
+To build for production:
+
+```bash
+npm run build
+```
+
+### Preview Production Build
+
+```bash
+npm run preview
+```
+
+---
+
+See `src/App.jsx` for the main app component and `vite.config.js` for build configuration.# React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

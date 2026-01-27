@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, Edit2, Check, Trash2, Globe, Trophy } from 'lucide-react';
+import { Plus, X, Edit2, Check, Trash2, Globe, Trophy, Share2 } from 'lucide-react';
 
 // CONFIGURE AQUI: URL do seu Worker depois do deploy
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
@@ -22,7 +22,12 @@ const translations = {
     loser: 'Perdedor',
     tie: 'Empate',
     syncing: 'Sincronizando...',
-    offline: 'Offline - salvando localmente'
+    offline: 'Offline - salvando localmente',
+    shareTitle: 'COMPARTILHAR',
+    shareDescription: 'Copie o link abaixo para compartilhar suas decisões:',
+    copyButton: '📋 COPIAR',
+    closeButton: 'FECHAR',
+    copied: '✓ Link copiado!'
   },
   'en': {
     title: 'SHOULD I STAY\nOR SHOULD I GO?',
@@ -41,7 +46,12 @@ const translations = {
     loser: 'Loser',
     tie: 'Tie',
     syncing: 'Syncing...',
-    offline: 'Offline - saving locally'
+    offline: 'Offline - saving locally',
+    shareTitle: 'SHARE',
+    shareDescription: 'Copy the link below to share your decisions:',
+    copyButton: '📋 COPY',
+    closeButton: 'CLOSE',
+    copied: '✓ Link copied!'
   }
 };
 
@@ -49,7 +59,7 @@ export default function ShouldIStayOrShouldIGo() {
   const [lists, setLists] = useState([
     {
       id: '1',
-      title: 'Stay Here',
+      title: 'Stay',
       pros: [
         { text: 'Good job', weight: 2 },
         { text: 'Nice weather', weight: 1 }
@@ -61,7 +71,7 @@ export default function ShouldIStayOrShouldIGo() {
     },
     {
       id: '2',
-      title: 'Move to Brazil',
+      title: 'Go',
       pros: [
         { text: 'Close to family', weight: 3 },
         { text: 'Lower cost', weight: 2 }
@@ -79,9 +89,49 @@ export default function ShouldIStayOrShouldIGo() {
   const [language, setLanguage] = useState('en');
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [showFloatingBar, setShowFloatingBar] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
 
   const t = translations[language];
-  const userId = 'default'; // Você pode gerar um ID único por usuário aqui
+  
+  // Generate or get session ID
+  const [sessionId] = useState(() => {
+    let id = localStorage.getItem('sessionId');
+    if (!id) {
+      id = Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('sessionId', id);
+    }
+    return id;
+  });
+  
+  const userId = sessionId;
+  const shareUrl = `https://sisosig.pages.dev/${sessionId}`;
+
+  // Detect scroll for floating bar
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowFloatingBar(window.scrollY > 300);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Share function
+  const handleShare = () => {
+    setShowShareDialog(true);
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShowCopiedToast(true);
+      setTimeout(() => setShowCopiedToast(false), 3000);
+    } catch (err) {
+      console.log('Failed to copy');
+    }
+  };
 
   // Calculate score for a list
   const calculateScore = (list) => {
@@ -458,6 +508,21 @@ export default function ShouldIStayOrShouldIGo() {
           }
         }
 
+        @keyframes slideDown {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+
         .title-font {
           font-family: 'Archivo Black', sans-serif;
           letter-spacing: 2px;
@@ -483,48 +548,136 @@ export default function ShouldIStayOrShouldIGo() {
       `}</style>
 
       {/* Header */}
-      <header className="header-gradient py-12 px-6 mb-8 sticky top-0 z-10">
+      <header className="header-gradient py-6 md:py-12 px-4 md:px-6 mb-6 md:mb-8">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-start justify-between mb-4">
-            <h1 className="title-font text-5xl md:text-7xl font-bold header-title text-black" style={{ whiteSpace: 'pre-line' }}>
-              {t.title}
-            </h1>
-            <div className="flex gap-3 items-start">
-              {/* Status Badge */}
-              <div className="status-badge body-font font-bold px-3 py-2 bg-white border-3 border-black">
-                {isSyncing ? t.syncing : isOnline ? '✓ Online' : t.offline}
-              </div>
+          <div className="flex items-start justify-between mb-2 md:mb-4">
+            <div className="flex-1">
+              <h1 className="title-font text-4xl md:text-5xl lg:text-7xl font-bold text-black mb-1 md:mb-2">
+                SISOSIG?
+              </h1>
+              <p className="body-font text-xs md:text-sm lg:text-base font-bold text-black/70 uppercase tracking-wide">
+                Should I Stay Or Should I Go?
+              </p>
+            </div>
+            <div className="flex gap-2 md:gap-3 items-start ml-4">
+              <button
+                onClick={handleShare}
+                className="p-2 md:p-3 bg-white border-3 md:border-4 border-black transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[3px_3px_0px_0px_#000] md:shadow-[4px_4px_0px_0px_#000] hover:shadow-[4px_4px_0px_0px_#000] md:hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000]"
+                title="Share"
+              >
+                <Share2 size={16} className="text-black md:w-5 md:h-5" />
+              </button>
               
               <button
                 onClick={toggleLanguage}
-                className="p-3 bg-white border-4 border-black transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[4px_4px_0px_0px_#000] hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000]"
+                className="p-2 md:p-3 bg-white border-3 md:border-4 border-black transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[3px_3px_0px_0px_#000] md:shadow-[4px_4px_0px_0px_#000] hover:shadow-[4px_4px_0px_0px_#000] md:hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000]"
                 title={language === 'en' ? 'Português' : 'English'}
               >
-                <Globe size={20} className="text-black" />
+                <Globe size={16} className="text-black md:w-5 md:h-5" />
               </button>
             </div>
           </div>
-          <p className="body-font text-lg md:text-xl font-bold text-black uppercase tracking-wide">
+          <p className="body-font text-sm md:text-lg lg:text-xl font-bold text-black uppercase tracking-wide hidden md:block">
             {t.subtitle}
           </p>
         </div>
       </header>
 
+      {/* Floating Bar (appears on scroll) */}
+      {showFloatingBar && lists.length > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-[#fbbf24] border-b-4 border-black py-3 px-4 shadow-lg animate-slideDown">
+          <div className="max-w-6xl mx-auto flex items-center gap-3 overflow-x-auto">
+            {lists.map((list) => {
+              const status = getWinnerStatus(list.id);
+              const score = calculateScore(list);
+              const isWinner = status === 'winner';
+              
+              return (
+                <div
+                  key={list.id}
+                  className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 border-3 border-black ${
+                    isWinner ? 'bg-green-400' : 'bg-white'
+                  }`}
+                >
+                  {isWinner && <span className="text-lg">🏆</span>}
+                  <div>
+                    <div className="body-font font-bold text-xs text-black truncate max-w-[120px]">
+                      {list.title}
+                    </div>
+                    <div className={`title-font font-bold text-sm ${
+                      score > 0 ? 'text-green-700' : score < 0 ? 'text-red-700' : 'text-gray-700'
+                    }`}>
+                      {score > 0 ? '+' : ''}{score}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Share Dialog */}
+      {showShareDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowShareDialog(false)}>
+          <div className="bg-[#fef3c7] border-5 border-black p-6 max-w-md w-full shadow-[12px_12px_0px_0px_#000]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="title-font text-2xl font-bold mb-4 text-black">
+              {t.shareTitle}
+            </h3>
+            <p className="body-font text-sm mb-4 text-black">
+              {t.shareDescription}
+            </p>
+            <div className="mb-4">
+              <input
+                type="text"
+                value={shareUrl}
+                readOnly
+                className="w-full px-4 py-3 border-3 border-black body-font text-sm bg-white"
+                onClick={(e) => e.target.select()}
+              />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={copyToClipboard}
+                className="flex-1 btn-primary px-4 py-3 font-bold uppercase tracking-wide text-sm body-font"
+              >
+                {t.copyButton}
+              </button>
+              <button
+                onClick={() => setShowShareDialog(false)}
+                className="flex-1 bg-white border-4 border-black px-4 py-3 font-bold uppercase tracking-wide text-sm body-font transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[4px_4px_0px_0px_#000] hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000]"
+              >
+                {t.closeButton}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {showCopiedToast && (
+        <div className="fixed top-4 right-4 z-[60] bg-green-400 border-4 border-black px-6 py-3 shadow-[6px_6px_0px_0px_#000] animate-slideDown">
+          <p className="body-font font-bold text-black">
+            {t.copied}
+          </p>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 md:px-6 pb-12 body-font">
+      <main className="max-w-6xl mx-auto px-4 md:px-6 pb-8 md:pb-12 body-font">
         {/* Add New List Button */}
-        <div className="mb-8 pt-8">
+        <div className="mb-6 md:mb-8 pt-4 md:pt-8">
           <button
             onClick={addList}
-            className="btn-primary px-6 py-3 font-bold uppercase tracking-wide flex items-center gap-2"
+            className="btn-primary px-4 md:px-6 py-2 md:py-3 font-bold uppercase tracking-wide flex items-center gap-2 text-sm md:text-base"
           >
-            <Plus size={20} />
+            <Plus size={18} className="md:w-5 md:h-5" />
             {t.newDecision}
           </button>
         </div>
 
         {/* Lists Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {lists.map((list, idx) => {
             const status = getWinnerStatus(list.id);
             const score = calculateScore(list);
@@ -537,34 +690,34 @@ export default function ShouldIStayOrShouldIGo() {
             return (
               <div
                 key={list.id}
-                className={`${cardClass} p-6 fade-in`}
+                className={`${cardClass} p-4 md:p-6 fade-in`}
                 style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 {/* Status Badge */}
                 {status === 'winner' && (
-                  <div className="winner-badge px-4 py-2 mb-4 text-center">
-                    <span className="title-font text-lg text-black">
+                  <div className="winner-badge px-3 md:px-4 py-1 md:py-2 mb-3 md:mb-4 text-center">
+                    <span className="title-font text-base md:text-lg text-black">
                       {t.winner}
                     </span>
                   </div>
                 )}
                 {status === 'loser' && (
-                  <div className="loser-badge px-4 py-2 mb-4 text-center">
-                    <span className="title-font text-sm text-white">
+                  <div className="loser-badge px-3 md:px-4 py-1 md:py-2 mb-3 md:mb-4 text-center">
+                    <span className="title-font text-xs md:text-sm text-white">
                       {t.loser}
                     </span>
                   </div>
                 )}
 
                 {/* List Header */}
-                <div className="mb-6 flex items-start justify-between gap-3">
+                <div className="mb-4 md:mb-6">
                   {editingListId === list.id ? (
-                    <div className="flex-1 flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full">
                       <input
                         type="text"
                         value={editingListTitle}
                         onChange={(e) => setEditingListTitle(e.target.value)}
-                        className="input-modern flex-1 px-4 py-2 text-xl font-bold"
+                        className="input-modern px-3 py-2 text-lg md:text-xl font-bold min-w-0 flex-1"
                         autoFocus
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') saveListTitle(list.id);
@@ -575,36 +728,42 @@ export default function ShouldIStayOrShouldIGo() {
                         onClick={() => saveListTitle(list.id)}
                         className="icon-btn p-2"
                       >
-                        <Check size={20} className="text-black" />
+                        <Check size={18} className="text-black" />
+                      </button>
+                      <button
+                        onClick={() => setEditingListId(null)}
+                        className="icon-btn p-2"
+                      >
+                        <X size={18} className="text-black" />
                       </button>
                     </div>
                   ) : (
-                    <h2 className="title-font text-2xl font-bold flex-1 text-black">
-                      {list.title}
-                    </h2>
+                    <div className="flex items-start justify-between gap-2 w-full">
+                      <h2 className="title-font text-xl md:text-2xl font-bold text-black break-words min-w-0 flex-1">
+                        {list.title}
+                      </h2>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => startEditingList(list)}
+                          className="icon-btn p-2"
+                        >
+                          <Edit2 size={16} className="text-black" />
+                        </button>
+                        <button
+                          onClick={() => deleteList(list.id)}
+                          className="icon-btn p-2"
+                        >
+                          <Trash2 size={16} className="text-black" />
+                        </button>
+                      </div>
+                    </div>
                   )}
-                  <div className="flex items-center gap-2">
-                    {editingListId !== list.id && (
-                      <button
-                        onClick={() => startEditingList(list)}
-                        className="icon-btn p-2"
-                      >
-                        <Edit2 size={18} className="text-black" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => deleteList(list.id)}
-                      className="icon-btn p-2"
-                    >
-                      <Trash2 size={18} className="text-black" />
-                    </button>
-                  </div>
                 </div>
 
                 {/* Score Display */}
-                <div className="mb-6 p-4 bg-white border-4 border-black text-center">
-                  <div className="title-font text-sm mb-1">{t.score}</div>
-                  <div className={`title-font text-4xl font-bold ${
+                <div className="mb-4 md:mb-6 p-3 md:p-4 bg-white border-3 md:border-4 border-black text-center">
+                  <div className="title-font text-xs md:text-sm mb-1">{t.score}</div>
+                  <div className={`title-font text-3xl md:text-4xl font-bold ${
                     score > 0 ? 'text-green-600' : score < 0 ? 'text-red-600' : 'text-gray-600'
                   }`}>
                     {score > 0 ? '+' : ''}{score}
@@ -612,13 +771,13 @@ export default function ShouldIStayOrShouldIGo() {
                 </div>
 
                 {/* Pros & Cons Container */}
-                <div className="grid grid-cols-1 gap-6">
+                <div className="grid grid-cols-1 gap-4 md:gap-6">
                   {/* PROS */}
                   <div>
-                    <h3 className="title-font text-lg font-bold mb-3 uppercase tracking-wider border-b-4 border-black pb-2 text-black">
+                    <h3 className="title-font text-base md:text-lg font-bold mb-2 md:mb-3 uppercase tracking-wider border-b-3 md:border-b-4 border-black pb-1 md:pb-2 text-black">
                       ✓ {t.pros}
                     </h3>
-                    <div className="space-y-3 mb-3">
+                    <div className="space-y-2 md:space-y-3 mb-2 md:mb-3">
                       {list.pros.map((pro, proIdx) => (
                         <div key={proIdx} className="pro-item p-3 group">
                           {editingItem?.listId === list.id && 
@@ -638,7 +797,7 @@ export default function ShouldIStayOrShouldIGo() {
                               />
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-bold">Peso:</span>
-                                {[1, 2, 3].map(w => (
+                                {[1, 2, 3, 5].map(w => (
                                   <button
                                     key={w}
                                     onClick={() => setEditingItem({ ...editingItem, weight: w })}
@@ -660,7 +819,7 @@ export default function ShouldIStayOrShouldIGo() {
                               <div className="flex-1">
                                 <span className="text-sm font-bold text-black block">{pro.text}</span>
                                 <div className="flex gap-1 mt-1">
-                                  {[1, 2, 3].map(w => (
+                                  {[1, 2, 3, 5].map(w => (
                                     <button
                                       key={w}
                                       onClick={() => updateWeight(list.id, 'pros', proIdx, w)}
@@ -715,10 +874,10 @@ export default function ShouldIStayOrShouldIGo() {
 
                   {/* CONS */}
                   <div>
-                    <h3 className="title-font text-lg font-bold mb-3 uppercase tracking-wider border-b-4 border-black pb-2 text-black">
+                    <h3 className="title-font text-base md:text-lg font-bold mb-2 md:mb-3 uppercase tracking-wider border-b-3 md:border-b-4 border-black pb-1 md:pb-2 text-black">
                       ✗ {t.cons}
                     </h3>
-                    <div className="space-y-3 mb-3">
+                    <div className="space-y-2 md:space-y-3 mb-2 md:mb-3">
                       {list.cons.map((con, conIdx) => (
                         <div key={conIdx} className="con-item p-3 group">
                           {editingItem?.listId === list.id && 
@@ -738,7 +897,7 @@ export default function ShouldIStayOrShouldIGo() {
                               />
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-bold">Peso:</span>
-                                {[1, 2, 3].map(w => (
+                                {[1, 2, 3, 5].map(w => (
                                   <button
                                     key={w}
                                     onClick={() => setEditingItem({ ...editingItem, weight: w })}
@@ -760,7 +919,7 @@ export default function ShouldIStayOrShouldIGo() {
                               <div className="flex-1">
                                 <span className="text-sm font-bold text-black block">{con.text}</span>
                                 <div className="flex gap-1 mt-1">
-                                  {[1, 2, 3].map(w => (
+                                  {[1, 2, 3, 5].map(w => (
                                     <button
                                       key={w}
                                       onClick={() => updateWeight(list.id, 'cons', conIdx, w)}
