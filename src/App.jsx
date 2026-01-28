@@ -90,7 +90,6 @@ export default function ShouldIStayOrShouldIGo() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [showFloatingBar, setShowFloatingBar] = useState(false);
-  const [showShareDialog, setShowShareDialog] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
 
   const t = translations[language];
@@ -130,11 +129,7 @@ export default function ShouldIStayOrShouldIGo() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Share function
-  const handleShare = () => {
-    setShowShareDialog(true);
-  };
-
+  // Copy function
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -571,14 +566,25 @@ export default function ShouldIStayOrShouldIGo() {
                 Should I Stay Or Should I Go?
               </p>
             </div>
-            <div className="flex gap-2 md:gap-3 items-start ml-4">
-              <button
-                onClick={handleShare}
-                className="p-2 md:p-3 bg-white border-3 md:border-4 border-black transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[3px_3px_0px_0px_#000] md:shadow-[4px_4px_0px_0px_#000] hover:shadow-[4px_4px_0px_0px_#000] md:hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000]"
-                title="Share"
-              >
-                <Share2 size={16} className="text-black md:w-5 md:h-5" />
-              </button>
+            <div className="flex gap-2 items-stretch ml-4">
+              {/* Share URL Field */}
+              <div className="flex items-center gap-2 bg-[#fecaca] border-3 md:border-4 border-black px-3 md:px-4 py-2 md:py-3 shadow-[3px_3px_0px_0px_#000] md:shadow-[4px_4px_0px_0px_#000]">
+                <input
+                  type="text"
+                  value={sessionId}
+                  readOnly
+                  className="bg-transparent body-font text-base md:text-lg font-bold text-black outline-none border-none w-auto"
+                  style={{ width: `${sessionId.length * 0.6}em` }}
+                  onClick={(e) => e.target.select()}
+                />
+                <button
+                  onClick={copyToClipboard}
+                  className="p-1 transition-all hover:scale-110 active:scale-95"
+                  title="Copy link"
+                >
+                  <Share2 size={16} className="text-black md:w-5 md:h-5" />
+                </button>
+              </div>
               
               <button
                 onClick={toggleLanguage}
@@ -589,6 +595,7 @@ export default function ShouldIStayOrShouldIGo() {
               </button>
             </div>
           </div>
+          
           <p className="body-font text-sm md:text-lg lg:text-xl font-bold text-black uppercase tracking-wide hidden md:block">
             {t.subtitle}
           </p>
@@ -625,43 +632,6 @@ export default function ShouldIStayOrShouldIGo() {
                 </div>
               );
             })}
-          </div>
-        </div>
-      )}
-
-      {/* Share Dialog */}
-      {showShareDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowShareDialog(false)}>
-          <div className="bg-[#fef3c7] border-5 border-black p-6 max-w-md w-full shadow-[12px_12px_0px_0px_#000]" onClick={(e) => e.stopPropagation()}>
-            <h3 className="title-font text-2xl font-bold mb-4 text-black">
-              {t.shareTitle}
-            </h3>
-            <p className="body-font text-sm mb-4 text-black">
-              {t.shareDescription}
-            </p>
-            <div className="mb-4">
-              <input
-                type="text"
-                value={shareUrl}
-                readOnly
-                className="w-full px-4 py-3 border-3 border-black body-font text-sm bg-white"
-                onClick={(e) => e.target.select()}
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={copyToClipboard}
-                className="flex-1 btn-primary px-4 py-3 font-bold uppercase tracking-wide text-sm body-font"
-              >
-                {t.copyButton}
-              </button>
-              <button
-                onClick={() => setShowShareDialog(false)}
-                className="flex-1 bg-white border-4 border-black px-4 py-3 font-bold uppercase tracking-wide text-sm body-font transition-all hover:translate-x-[-2px] hover:translate-y-[-2px] shadow-[4px_4px_0px_0px_#000] hover:shadow-[6px_6px_0px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_#000]"
-              >
-                {t.closeButton}
-              </button>
-            </div>
           </div>
         </div>
       )}
