@@ -105,6 +105,7 @@ export default function ShouldIStayOrShouldIGo() {
     
     // Always create a new board when accessing root URL
     const id = Math.random().toString(36).substring(2, 15);
+    // Store in localStorage for consistency (even though we don't read it for root URL)
     localStorage.setItem('sessionId', id);
     
     // Update URL without reload
