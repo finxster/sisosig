@@ -94,7 +94,7 @@ export default function ShouldIStayOrShouldIGo() {
 
   const t = translations[language];
   
-  // Generate or get session ID from URL or localStorage
+  // Generate or get session ID from URL
   const [sessionId] = useState(() => {
     // Try to get from URL first
     const pathId = window.location.pathname.substring(1); // Remove leading /
@@ -103,12 +103,10 @@ export default function ShouldIStayOrShouldIGo() {
       return pathId;
     }
     
-    // Try localStorage
-    let id = localStorage.getItem('sessionId');
-    if (!id) {
-      id = Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('sessionId', id);
-    }
+    // Always create a new board when accessing root URL
+    const id = Math.random().toString(36).substring(2, 15);
+    // Store in localStorage for consistency (even though we don't read it for root URL)
+    localStorage.setItem('sessionId', id);
     
     // Update URL without reload
     window.history.replaceState(null, '', `/${id}`);
